@@ -2,8 +2,33 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import fs from "fs";
 import path from "path";
+import { watchFile } from "fs";
 
 const execAsync = promisify(exec);
+
+// Cache for config
+let configCache = {
+  contexts: [] as string[],
+  namespaces: {} as Record<string, string[]>
+};
+
+// Watch k8s-config.json for changes
+const configPath = path.join(process.cwd(), 'k8s-config.json');
+watchFile(configPath, async (curr, prev) => {
+  if (curr.mtime !== prev.mtime) {
+    try {
+      const fileContent = fs.readFileSync(configPath, 'utf8');
+      const config = JSON.parse(fileContent);
+      configCache = {
+        contexts: config.contexts || [],
+        namespaces: config.namespaces || {}
+      };
+      console.log('K8s config updated');
+    } catch (error) {
+      console.error('Error updating k8s config:', error);
+    }
+  }
+});
 
 // Function to validate a kubectl command
 function validateCommand(command: string): boolean {
@@ -119,18 +144,17 @@ export async function loadContextsFromFile(filePath?: string): Promise<string[]>
 
 // Function to get Kubernetes contexts
 export async function getContexts(): Promise<string[]> {
+  if (configCache.contexts.length > 0) {
+    return configCache.contexts;
+  }
+  
   try {
-    // First try to load from file
-    const fileContexts = await loadContextsFromFile();
-    if (fileContexts.length > 0) {
-      return fileContexts;
-    }
-    
-    // Fallback to kubectl if no contexts in file
-    const { stdout } = await execAsync("kubectl config get-contexts -o name");
-    return stdout.trim().split("\n").filter(Boolean);
+    const fileContent = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(fileContent);
+    configCache.contexts = config.contexts || [];
+    return configCache.contexts;
   } catch (error) {
-    // If command fails, return default contexts
+    console.error('Error reading contexts:', error);
     return ["minikube", "docker-desktop", "production"];
   }
 }
@@ -171,22 +195,17 @@ export async function loadNamespacesFromFile(context: string, filePath?: string)
 
 // Function to get namespaces for a given context
 export async function getNamespaces(context: string): Promise<string[]> {
+  if (configCache.namespaces[context]) {
+    return configCache.namespaces[context];
+  }
+  
   try {
-    // First try to load from file
-    const fileNamespaces = await loadNamespacesFromFile(context);
-    if (fileNamespaces.length > 0) {
-      return fileNamespaces;
-    }
-    
-    // Fallback to kubectl if no namespaces in file
-    const { stdout } = await execAsync(`kubectl get namespaces --context=${context} -o name`);
-    return stdout
-      .trim()
-      .split("\n")
-      .map(ns => ns.replace("namespace/", ""))
-      .filter(Boolean);
+    const fileContent = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(fileContent);
+    configCache.namespaces = config.namespaces || {};
+    return configCache.namespaces[context] || ["default", "kube-system", "kube-public"];
   } catch (error) {
-    // If command fails, return default namespaces
+    console.error('Error reading namespaces:', error);
     return ["default", "kube-system", "kube-public"];
   }
 }
