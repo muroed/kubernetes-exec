@@ -1,5 +1,7 @@
 import { exec } from "child_process";
 import { promisify } from "util";
+import fs from "fs";
+import path from "path";
 
 const execAsync = promisify(exec);
 
@@ -75,11 +77,46 @@ export async function executeKubernetesCommand(
   }
 }
 
+// Function to load contexts from configuration file
+export async function loadContextsFromFile(filePath?: string): Promise<string[]> {
+  try {
+    // Default to the config.json file in the project root
+    const configPath = filePath || path.join(process.cwd(), 'k8s-config.json');
+    
+    // Check if the file exists
+    if (!fs.existsSync(configPath)) {
+      console.log(`Config file not found at ${configPath}, using fallback contexts`);
+      return ["minikube", "docker-desktop", "production"]; // Fallback contexts
+    }
+    
+    // Read and parse the file
+    const fileContent = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(fileContent);
+    
+    // Validate that the config has contexts
+    if (!config.contexts || !Array.isArray(config.contexts)) {
+      console.log('Invalid config file format, using fallback contexts');
+      return ["minikube", "docker-desktop", "production"]; // Fallback contexts
+    }
+    
+    // Return the contexts
+    return config.contexts;
+  } catch (error) {
+    console.error('Error loading contexts from file:', error);
+    return ["minikube", "docker-desktop", "production"]; // Fallback contexts
+  }
+}
+
 // Function to get Kubernetes contexts
 export async function getContexts(): Promise<string[]> {
   try {
-    // In a real implementation, you would use the kubernetes client to get the contexts
-    // For this demo, we'll return a static list
+    // First try to load from file
+    const fileContexts = await loadContextsFromFile();
+    if (fileContexts.length > 0) {
+      return fileContexts;
+    }
+    
+    // Fallback to kubectl if no contexts in file
     const { stdout } = await execAsync("kubectl config get-contexts -o name");
     return stdout.trim().split("\n").filter(Boolean);
   } catch (error) {
@@ -88,11 +125,50 @@ export async function getContexts(): Promise<string[]> {
   }
 }
 
+// Function to load namespaces from configuration file
+export async function loadNamespacesFromFile(context: string, filePath?: string): Promise<string[]> {
+  try {
+    // Default to the config.json file in the project root
+    const configPath = filePath || path.join(process.cwd(), 'k8s-config.json');
+    
+    // Check if the file exists
+    if (!fs.existsSync(configPath)) {
+      console.log(`Config file not found at ${configPath}, using fallback namespaces`);
+      return ["default", "kube-system", "kube-public"]; // Fallback namespaces
+    }
+    
+    // Read and parse the file
+    const fileContent = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(fileContent);
+    
+    // Validate that the config has the context with namespaces
+    if (!config.namespaces || typeof config.namespaces !== 'object') {
+      console.log('Invalid config file format (namespaces), using fallback namespaces');
+      return ["default", "kube-system", "kube-public"]; // Fallback namespaces
+    }
+    
+    // If the context has namespaces, return them, otherwise return defaults
+    if (Array.isArray(config.namespaces[context])) {
+      return config.namespaces[context];
+    } else {
+      return ["default", "kube-system", "kube-public"]; // Fallback namespaces
+    }
+  } catch (error) {
+    console.error('Error loading namespaces from file:', error);
+    return ["default", "kube-system", "kube-public"]; // Fallback namespaces
+  }
+}
+
 // Function to get namespaces for a given context
 export async function getNamespaces(context: string): Promise<string[]> {
   try {
-    // In a real implementation, you would use the kubernetes client to get the namespaces
-    // For this demo, we'll return a static list
+    // First try to load from file
+    const fileNamespaces = await loadNamespacesFromFile(context);
+    if (fileNamespaces.length > 0) {
+      return fileNamespaces;
+    }
+    
+    // Fallback to kubectl if no namespaces in file
     const { stdout } = await execAsync(`kubectl get namespaces --context=${context} -o name`);
     return stdout
       .trim()

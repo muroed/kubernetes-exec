@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  kubecli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount the Kubernetes config file for accessing clusters
+      - ${HOME}/.kube:/root/.kube:ro
+      # Mount the config file for contexts and namespaces
+      - ./k8s-config.json:/app/k8s-config.json:ro
+    environment:
+      - NODE_ENV=production
+      - SESSION_SECRET=change-me-in-production
+    restart: unless-stopped
