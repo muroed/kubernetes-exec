@@ -47,7 +47,6 @@ async function loadConfigOnStartup() {
 loadConfigOnStartup();
 
 // Watch k8s-config.json for changes
-const configPath = path.join(process.cwd(), 'k8s-config.json');
 watchFile(configPath, async (curr, prev) => {
   if (curr.mtime !== prev.mtime) {
     try {

@@ -1,18 +1,18 @@
 {
   "contexts": [
-    "minikube",
+    "yc-nova-sand",
     "docker-desktop",
     "production",
     "staging",
     "dev"
   ],
   "namespaces": {
-    "minikube": ["default", "kube-system", "kube-public", "monitoring", "custom"],
+    "yc-nova-sand": ["default", "kube-system", "kube-public", "monitoring", "custom"],
     "docker-desktop": ["default", "kube-system", "kube-public", "docker", "ingress-nginx"],
     "production": ["default", "kube-system", "kube-public", "app", "monitoring", "services", "ingress"],
     "staging": ["default", "kube-system", "kube-public", "test", "development"],
     "dev": ["default", "kube-system", "kube-public", "my-app", "testing"]
   },
-  "defaultContext": "minikube",
+  "defaultContext": "yc-nova-sand",
   "defaultNamespace": "default"
 }
