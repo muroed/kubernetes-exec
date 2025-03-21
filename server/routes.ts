@@ -50,8 +50,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
       });
       
-      // Set session
-      req.session.userId = user.id;
+      // Set user ID in session (TypeScript won't recognize this custom property)
+      (req.session as any).userId = user.id;
       
       // Return user without password
       const { password, ...userWithoutPassword } = user;
@@ -75,14 +75,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
-      // Verify password - for demo, simple comparison
-      // For a real app, use bcrypt.compare
-      if (parsedData.password !== user.password) {
+      // Verify password using bcrypt
+      const validPassword = await bcrypt.compare(parsedData.password, user.password);
+      if (!validPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
-      // Set session
-      req.session.userId = user.id;
+      // Set user ID in session (TypeScript won't recognize this custom property)
+      (req.session as any).userId = user.id;
       
       // Return user without password
       const { password, ...userWithoutPassword } = user;

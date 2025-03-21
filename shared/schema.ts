@@ -54,6 +54,7 @@ export const executeCommandSchema = z.object({
   command: z.string().min(1, "Command is required"),
   namespace: z.string().optional(),
   context: z.string().optional(),
+  pod: z.string().optional(),
 });
 
 export type ExecuteCommandRequest = z.infer<typeof executeCommandSchema>;

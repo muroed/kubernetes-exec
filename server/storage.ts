@@ -53,11 +53,20 @@ export class MemStorage implements IStorage {
   async createCommand(insertCommand: InsertCommand): Promise<Command> {
     const id = this.commandIdCounter++;
     const now = new Date();
-    const command: Command = { 
-      ...insertCommand, 
+    
+    // Create a properly typed command object
+    const command: Command = {
       id,
       executedAt: now,
+      command: insertCommand.command,
+      output: insertCommand.output ?? null,
+      error: insertCommand.error ?? null,
+      status: insertCommand.status ?? "success",
+      userId: insertCommand.userId ?? null,
+      namespace: insertCommand.namespace ?? "default",
+      context: insertCommand.context ?? "minikube",
     };
+    
     this.commands.set(id, command);
     return command;
   }
@@ -71,7 +80,9 @@ export class MemStorage implements IStorage {
   }
   
   async clearCommandHistory(userId: number): Promise<void> {
-    for (const [id, command] of this.commands.entries()) {
+    // Convert entries to array first to avoid MapIterator issue
+    const entries = Array.from(this.commands.entries());
+    for (const [id, command] of entries) {
       if (command.userId === userId) {
         this.commands.delete(id);
       }
