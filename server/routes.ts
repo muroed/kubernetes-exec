@@ -220,25 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/kubernetes/config", isAuthenticated, async (_req, res) => {
-    try {
-      const configPath = path.join(process.cwd(), 'k8s-config.json');
-      const config = await fs.promises.readFile(configPath, 'utf8');
-      res.json(JSON.parse(config));
-    } catch (error) {
-      res.status(500).json({ message: "Error reading config file" });
-    }
-  });
-
-  app.post("/api/kubernetes/config", isAuthenticated, async (req, res) => {
-    try {
-      const configPath = path.join(process.cwd(), 'k8s-config.json');
-      await fs.promises.writeFile(configPath, JSON.stringify(req.body, null, 2));
-      res.json({ message: "Config updated successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Error updating config file" });
-    }
-  });
+  
 
   const httpServer = createServer(app);
   return httpServer;
