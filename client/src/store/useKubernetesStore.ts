@@ -26,6 +26,11 @@ interface KubernetesState {
   setCurrentContext: (context: string) => void;
   contexts: string[];
   setContexts: (contexts: string[]) => void;
+  currentPod: string | null;
+  setCurrentPod: (pod: string | null) => void;
+  pods: string[];
+  setPods: (pods: string[]) => void;
+  loadPods: () => Promise<void>;
   executeQuickCommand: (command: string) => Promise<void>;
 }
 
@@ -45,23 +50,68 @@ export const useKubernetesStore = create<KubernetesState>()(
       setCommandHistory: (history) => set({ commandHistory: history }),
       
       currentNamespace: 'default',
-      setCurrentNamespace: (namespace) => set({ currentNamespace: namespace }),
+      setCurrentNamespace: (namespace) => {
+        set({ currentNamespace: namespace, currentPod: null });
+        // When namespace changes, reload pods
+        get().loadPods();
+      },
       
       namespaces: ['default', 'kube-system', 'kube-public'],
       setNamespaces: (namespaces) => set({ namespaces }),
       
       currentContext: 'minikube',
-      setCurrentContext: (context) => set({ currentContext: context }),
+      setCurrentContext: (context) => {
+        set({ currentContext: context, currentPod: null });
+        // When context changes, reload pods
+        get().loadPods();
+      },
       
       contexts: ['minikube', 'docker-desktop', 'production'],
       setContexts: (contexts) => set({ contexts }),
       
+      // Pod related state
+      currentPod: null,
+      setCurrentPod: (pod) => set({ currentPod: pod }),
+      
+      pods: [],
+      setPods: (pods) => set({ pods }),
+      
+      // Load pods for current namespace and context
+      loadPods: async () => {
+        try {
+          const { currentNamespace, currentContext } = get();
+          const res = await apiRequest(
+            'GET', 
+            `/api/kubernetes/pods?namespace=${currentNamespace}&context=${currentContext}`
+          );
+          
+          const pods = await res.json();
+          set({ pods });
+          
+          // If the current pod is not in the list anymore, reset it
+          if (get().currentPod && !pods.includes(get().currentPod)) {
+            set({ currentPod: null });
+          }
+        } catch (error) {
+          const toast = useToast();
+          toast.toast({
+            title: 'Failed to load pods',
+            description: error instanceof Error ? error.message : 'Unknown error occurred',
+            variant: 'destructive',
+          });
+          set({ pods: [] });
+        }
+      },
+      
       executeQuickCommand: async (command) => {
         try {
+          const { currentNamespace, currentContext, currentPod } = get();
+          
           const res = await apiRequest('POST', '/api/kubernetes/execute', {
             command,
-            namespace: get().currentNamespace,
-            context: get().currentContext,
+            namespace: currentNamespace,
+            context: currentContext,
+            pod: currentPod,
           });
           
           const result = await res.json();
@@ -97,6 +147,7 @@ export const useKubernetesStore = create<KubernetesState>()(
       partialize: (state) => ({ 
         currentNamespace: state.currentNamespace,
         currentContext: state.currentContext,
+        currentPod: state.currentPod,
       }),
     }
   )

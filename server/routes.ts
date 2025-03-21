@@ -132,6 +132,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
+  
+  app.get("/api/kubernetes/pods", isAuthenticated, async (req, res) => {
+    try {
+      const namespace = req.query.namespace as string;
+      const context = req.query.context as string;
+      
+      if (!namespace || !context) {
+        return res.status(400).json({ message: "Namespace and context are required" });
+      }
+      
+      const pods = await getPods(namespace, context);
+      res.json(pods);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unexpected error occurred" });
+      }
+    }
+  });
 
   app.post("/api/kubernetes/execute", isAuthenticated, async (req, res) => {
     try {
@@ -143,7 +163,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await executeKubernetesCommand(
         parsedData.command,
         parsedData.namespace || "default",
-        parsedData.context || "minikube"
+        parsedData.context || "minikube",
+        parsedData.pod || null
       );
       
       // Add to command history
@@ -155,6 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: result.error ? "error" : "success",
         namespace: parsedData.namespace || "default",
         context: parsedData.context || "minikube",
+        pod: parsedData.pod || null,
       });
       
       res.json(result);

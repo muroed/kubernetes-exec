@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { RefreshCw } from "lucide-react";
 
 export default function Terminal() {
   const [commandInput, setCommandInput] = useState("");
+  const [isLoadingPods, setIsLoadingPods] = useState(false);
   const { 
     outputResults, 
     addOutputResult, 
@@ -17,10 +19,31 @@ export default function Terminal() {
     setCurrentNamespace, 
     namespaces, 
     currentContext, 
-    contexts
+    setCurrentContext,
+    contexts,
+    pods,
+    currentPod,
+    setCurrentPod,
+    loadPods
   } = useKubernetesStore();
   const { isAuthenticated, setShowAuthModal } = useAuthStore();
   const { toast } = useToast();
+  
+  // Load pods when component mounts
+  useEffect(() => {
+    const fetchPods = async () => {
+      setIsLoadingPods(true);
+      try {
+        await loadPods();
+      } catch (error) {
+        console.error("Failed to load pods:", error);
+      } finally {
+        setIsLoadingPods(false);
+      }
+    };
+    
+    fetchPods();
+  }, [loadPods]);
 
   const executeCommand = async (command: string) => {
     if (!command.trim()) return;
@@ -29,7 +52,8 @@ export default function Terminal() {
       const res = await apiRequest("POST", "/api/kubernetes/execute", {
         command,
         namespace: currentNamespace,
-        context: currentContext
+        context: currentContext,
+        pod: currentPod
       });
       
       const result = await res.json();
@@ -54,6 +78,25 @@ export default function Terminal() {
         output: "",
         error: error instanceof Error ? error.message : "Unknown error occurred"
       });
+    }
+  };
+  
+  const handleRefreshPods = async () => {
+    setIsLoadingPods(true);
+    try {
+      await loadPods();
+      toast({
+        title: "Pods refreshed",
+        description: `Found ${pods.length} pods in namespace ${currentNamespace}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to refresh pods",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingPods(false);
     }
   };
 
