@@ -9,8 +9,41 @@ const execAsync = promisify(exec);
 // Cache for config
 let configCache = {
   contexts: [] as string[],
-  namespaces: {} as Record<string, string[]>
+  namespaces: {} as Record<string, string[]>,
+  contextStatus: {} as Record<string, boolean>
 };
+
+// Function to check if context is available
+async function checkContextAvailability(context: string): Promise<boolean> {
+  try {
+    await execAsync(`kubectl cluster-info --context=${context}`);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+// Function to load config on startup
+async function loadConfigOnStartup() {
+  try {
+    const fileContent = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(fileContent);
+    configCache.contexts = config.contexts || [];
+    configCache.namespaces = config.namespaces || {};
+    
+    // Check availability for each context
+    for (const context of configCache.contexts) {
+      configCache.contextStatus[context] = await checkContextAvailability(context);
+    }
+    
+    console.log('K8s config loaded on startup');
+  } catch (error) {
+    console.error('Error loading k8s config:', error);
+  }
+}
+
+// Load config on startup
+loadConfigOnStartup();
 
 // Watch k8s-config.json for changes
 const configPath = path.join(process.cwd(), 'k8s-config.json');
@@ -143,19 +176,15 @@ export async function loadContextsFromFile(filePath?: string): Promise<string[]>
 }
 
 // Function to get Kubernetes contexts
-export async function getContexts(): Promise<string[]> {
-  if (configCache.contexts.length > 0) {
-    return configCache.contexts;
-  }
-  
+export async function getContexts(): Promise<Array<{name: string; available: boolean}>> {
   try {
-    const fileContent = fs.readFileSync(configPath, 'utf8');
-    const config = JSON.parse(fileContent);
-    configCache.contexts = config.contexts || [];
-    return configCache.contexts;
+    return configCache.contexts.map(context => ({
+      name: context,
+      available: configCache.contextStatus[context] || false
+    }));
   } catch (error) {
     console.error('Error reading contexts:', error);
-    return ["minikube", "docker-desktop", "production"];
+    return [];
   }
 }
 

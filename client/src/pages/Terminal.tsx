@@ -28,7 +28,7 @@ export default function Terminal() {
   } = useKubernetesStore();
   const { isAuthenticated, setShowAuthModal } = useAuthStore();
   const { toast } = useToast();
-  
+
   // Load pods when component mounts
   useEffect(() => {
     const fetchPods = async () => {
@@ -41,7 +41,7 @@ export default function Terminal() {
         setIsLoadingPods(false);
       }
     };
-    
+
     fetchPods();
   }, [loadPods]);
 
@@ -55,17 +55,17 @@ export default function Terminal() {
         context: currentContext,
         pod: currentPod
       });
-      
+
       const result = await res.json();
-      
+
       addOutputResult({
         command,
         output: result.output || "",
         error: result.error || ""
       });
-      
+
       setCommandInput("");
-      
+
     } catch (error) {
       toast({
         title: "Command execution failed",
@@ -80,7 +80,7 @@ export default function Terminal() {
       });
     }
   };
-  
+
   const handleRefreshPods = async () => {
     setIsLoadingPods(true);
     try {
@@ -112,12 +112,19 @@ export default function Terminal() {
             </SelectTrigger>
             <SelectContent>
               {contexts.map((ctx) => (
-                <SelectItem key={ctx} value={ctx}>{ctx}</SelectItem>
+                <SelectItem 
+                  key={ctx.name} 
+                  value={ctx.name} 
+                  disabled={!ctx.available}
+                  className={!ctx.available ? 'text-red-500 cursor-not-allowed' : ''}
+                >
+                  {ctx.name} {!ctx.available && '(unavailable)'}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="flex items-center">
           <span className="mr-2">Namespace:</span>
           <Select value={currentNamespace} onValueChange={setCurrentNamespace}>
@@ -131,7 +138,7 @@ export default function Terminal() {
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="flex items-center">
           <span className="mr-2">Pod:</span>
           <div className="flex items-center gap-2">
@@ -149,7 +156,7 @@ export default function Terminal() {
                 ))}
               </SelectContent>
             </Select>
-            
+
             <Button 
               variant="outline" 
               size="icon" 
@@ -165,7 +172,7 @@ export default function Terminal() {
           </div>
         </div>
       </div>
-      
+
       {/* Command Input */}
       <CommandInput 
         value={commandInput} 
@@ -175,7 +182,7 @@ export default function Terminal() {
         onAuthClick={() => setShowAuthModal(true)}
         selectedPod={currentPod}
       />
-      
+
       {/* Output Terminal */}
       <OutputTerminal 
         results={outputResults} 
