@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { executeKubernetesCommand, getContexts, getNamespaces } from "./kubernetes";
+import { executeKubernetesCommand, getContexts, getNamespaces, getPods } from "./kubernetes";
 import { loginSchema, executeCommandSchema } from "../shared/schema";
 import bcrypt from "bcryptjs";
 import session from "express-session";

@@ -31,7 +31,8 @@ function validateCommand(command: string): boolean {
 export async function executeKubernetesCommand(
   command: string,
   namespace = "default",
-  context = "minikube"
+  context = "minikube",
+  pod: string | null = null
 ): Promise<{ output: string; error: string }> {
   // Validate command
   if (!validateCommand(command)) {
@@ -42,15 +43,24 @@ export async function executeKubernetesCommand(
   }
   
   try {
-    // Add namespace and context flags if not already in the command
-    let fullCommand = command;
+    let fullCommand: string;
     
-    if (!fullCommand.includes("--namespace") && !fullCommand.includes("-n ")) {
-      fullCommand += ` --namespace=${namespace}`;
-    }
-    
-    if (!fullCommand.includes("--context")) {
-      fullCommand += ` --context=${context}`;
+    if (pod && !command.startsWith('exec')) {
+      // If a pod is specified and the command isn't already an exec command,
+      // create an exec command to run inside the pod
+      fullCommand = `kubectl exec -i ${pod} --namespace=${namespace} --context=${context} -- ${command}`;
+    } else {
+      // Regular kubectl command (or exec command that already has a pod specified)
+      fullCommand = command;
+      
+      // Add namespace and context flags if not already in the command
+      if (!fullCommand.includes("--namespace") && !fullCommand.includes("-n ")) {
+        fullCommand += ` --namespace=${namespace}`;
+      }
+      
+      if (!fullCommand.includes("--context")) {
+        fullCommand += ` --context=${context}`;
+      }
     }
     
     // Set a timeout for command execution
@@ -178,5 +188,20 @@ export async function getNamespaces(context: string): Promise<string[]> {
   } catch (error) {
     // If command fails, return default namespaces
     return ["default", "kube-system", "kube-public"];
+  }
+}
+
+// Function to get pods for a given namespace and context
+export async function getPods(namespace: string, context: string): Promise<string[]> {
+  try {
+    const { stdout } = await execAsync(`kubectl get pods --namespace=${namespace} --context=${context} -o name`);
+    return stdout
+      .trim()
+      .split("\n")
+      .map(pod => pod.replace("pod/", ""))
+      .filter(Boolean);
+  } catch (error) {
+    console.error('Error getting pods:', error);
+    return [];
   }
 }

@@ -65,6 +65,7 @@ export class MemStorage implements IStorage {
       userId: insertCommand.userId ?? null,
       namespace: insertCommand.namespace ?? "default",
       context: insertCommand.context ?? "minikube",
+      pod: insertCommand.pod ?? null,
     };
     
     this.commands.set(id, command);

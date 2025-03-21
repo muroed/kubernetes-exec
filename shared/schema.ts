@@ -26,6 +26,7 @@ export const commands = pgTable("commands", {
   executedAt: timestamp("executed_at").notNull().defaultNow(),
   namespace: text("namespace").notNull().default("default"),
   context: text("context").notNull().default("minikube"),
+  pod: text("pod"),
 });
 
 export const insertCommandSchema = createInsertSchema(commands).pick({
@@ -36,6 +37,7 @@ export const insertCommandSchema = createInsertSchema(commands).pick({
   status: true,
   namespace: true,
   context: true,
+  pod: true,
 });
 
 export type InsertCommand = z.infer<typeof insertCommandSchema>;
