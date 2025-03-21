@@ -60,27 +60,7 @@ export default function Header({ toggleSidebar, sidebarOpen }: HeaderProps) {
             <i className={`fas ${darkMode ? "fa-sun" : "fa-moon"}`}></i>
           </Button>
           
-          {!isAuthenticated ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAuthModal(true)}
-              className="flex items-center"
-            >
-              <i className="fas fa-sign-in-alt mr-1"></i>
-              <span className="hidden md:inline">Login</span>
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={logout}
-              className="flex items-center"
-            >
-              <i className="fas fa-sign-out-alt mr-1"></i>
-              <span className="hidden md:inline">Logout</span>
-            </Button>
-          )}
+          {/* Authentication UI removed */}
         </div>
       </div>
     </header>

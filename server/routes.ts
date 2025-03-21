@@ -24,13 +24,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     })
   );
 
-  // Middleware to check if user is authenticated
-  const isAuthenticated = (req: Request, res: Response, next: Function) => {
-    if (req.session.userId) {
-      next();
-    } else {
-      res.status(401).json({ message: "Unauthorized" });
-    }
+  // Authentication is disabled
+  const isAuthenticated = (_req: Request, _res: Response, next: Function) => {
+    next();
   };
 
   // Auth routes
@@ -140,7 +136,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/kubernetes/execute", isAuthenticated, async (req, res) => {
     try {
       const parsedData = executeCommandSchema.parse(req.body);
-      const userId = req.session.userId as number;
+      // Default user ID for command history since auth is disabled
+      const userId = 1;
       
       // Execute command
       const result = await executeKubernetesCommand(
@@ -172,7 +169,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/kubernetes/history", isAuthenticated, async (req, res) => {
     try {
-      const userId = req.session.userId as number;
+      // Default user ID for command history since auth is disabled
+      const userId = 1;
       const history = await storage.getCommandHistory(userId);
       res.json(history);
     } catch (error) {
@@ -186,7 +184,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/kubernetes/history/clear", isAuthenticated, async (req, res) => {
     try {
-      const userId = req.session.userId as number;
+      // Default user ID for command history since auth is disabled
+      const userId = 1;
       await storage.clearCommandHistory(userId);
       res.json({ message: "Command history cleared" });
     } catch (error) {

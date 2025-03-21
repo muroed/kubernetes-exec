@@ -14,12 +14,13 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      isAuthenticated: false,
-      user: null,
+      // Auto-authenticated since we removed authentication requirement
+      isAuthenticated: true,
+      user: { id: 1, username: 'default', password: 'default' },
       showAuthModal: false,
       setShowAuthModal: (show) => set({ showAuthModal: show }),
       login: (user) => set({ isAuthenticated: true, user, showAuthModal: false }),
-      logout: () => set({ isAuthenticated: false, user: null }),
+      logout: () => set({ isAuthenticated: true, user: { id: 1, username: 'default', password: 'default' } }),
     }),
     {
       name: 'kubecli-auth',

@@ -24,10 +24,6 @@ export default function Terminal() {
 
   const executeCommand = async (command: string) => {
     if (!command.trim()) return;
-    if (!isAuthenticated) {
-      setShowAuthModal(true);
-      return;
-    }
 
     try {
       const res = await apiRequest("POST", "/api/kubernetes/execute", {
