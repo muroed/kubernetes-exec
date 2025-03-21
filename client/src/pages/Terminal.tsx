@@ -143,9 +143,14 @@ export default function Terminal() {
             <Button
               variant="outline"
               onClick={async () => {
-                const response = await fetch('/api/kubernetes/contexts?useKubeconfig=true');
-                const contexts = await response.json();
-                setContexts(contexts);
+                try {
+                  const response = await fetch('/api/kubernetes/contexts?useKubeconfig=true');
+                  const contexts = await response.json();
+                  setContexts(contexts);
+                  await loadNamespaces(currentContext);
+                } catch (error) {
+                  console.error('Failed to load contexts:', error);
+                }
               }}
               className="h-9"
               title="Load from kubeconfig"
