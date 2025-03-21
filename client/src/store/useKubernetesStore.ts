@@ -66,8 +66,17 @@ export const useKubernetesStore = create<KubernetesState>()(
         get().loadPods();
       },
       
-      contexts: ['minikube', 'docker-desktop', 'production'],
+      contexts: [],
       setContexts: (contexts) => set({ contexts }),
+      
+      loadContexts: async () => {
+        try {
+          const response = await apiRequest('/api/kubernetes/contexts');
+          set({ contexts: response });
+        } catch (error) {
+          console.error('Failed to load contexts:', error);
+        }
+      },
       
       // Pod related state
       currentPod: null,

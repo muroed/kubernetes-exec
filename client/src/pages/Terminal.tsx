@@ -128,9 +128,11 @@ export default function Terminal() {
           <Button 
             variant="outline" 
             size="icon"
-            onClick={() => {
-              loadContexts();
-              loadNamespaces(currentContext);
+            onClick={async () => {
+              await loadContexts();
+              if (currentContext) {
+                await loadNamespaces(currentContext);
+              }
             }}
             className="h-9 w-9"
             title="Refresh contexts"
