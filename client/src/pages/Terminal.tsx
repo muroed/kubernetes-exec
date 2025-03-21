@@ -24,7 +24,9 @@ export default function Terminal() {
     pods,
     currentPod,
     setCurrentPod,
-    loadPods
+    loadPods,
+    loadContexts, // Assumed to exist
+    loadNamespaces // Assumed to exist
   } = useKubernetesStore();
   const { isAuthenticated, setShowAuthModal } = useAuthStore();
   const { toast } = useToast();
@@ -123,6 +125,18 @@ export default function Terminal() {
               ))}
             </SelectContent>
           </Select>
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => {
+              loadContexts();
+              loadNamespaces(currentContext);
+            }}
+            className="h-9 w-9"
+            title="Refresh contexts"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
 
         <div className="flex items-center">
