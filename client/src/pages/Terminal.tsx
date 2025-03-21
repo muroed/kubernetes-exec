@@ -149,8 +149,11 @@ export default function Terminal() {
                   const contexts = await response.json();
                   const contextNames = contexts.map(ctx => ctx.name);
                   setContexts(contextNames);
-                  if (currentContext) {
-                    await loadNamespaces(currentContext);
+                  // Set first context as current if none selected
+                  const targetContext = currentContext || (contextNames.length > 0 ? contextNames[0] : '');
+                  if (targetContext) {
+                    setCurrentContext(targetContext);
+                    await loadNamespaces(targetContext);
                   }
                 } catch (error) {
                   console.error('Failed to load contexts:', error);
