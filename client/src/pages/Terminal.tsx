@@ -21,12 +21,13 @@ export default function Terminal() {
     currentContext, 
     setCurrentContext,
     contexts,
+    setContexts,
     pods,
     currentPod,
     setCurrentPod,
     loadPods,
-    loadContexts, // Assumed to exist
-    loadNamespaces // Assumed to exist
+    loadContexts,
+    loadNamespaces
   } = useKubernetesStore();
   const { isAuthenticated, setShowAuthModal } = useAuthStore();
   const { toast } = useToast();
