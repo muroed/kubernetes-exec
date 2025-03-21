@@ -5,6 +5,7 @@ import path from "path";
 import { watchFile } from "fs";
 
 const execAsync = promisify(exec);
+const configPath = path.join(process.cwd(), 'k8s-config.json');
 
 // Cache for config
 let configCache = {
