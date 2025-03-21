@@ -125,20 +125,34 @@ export default function Terminal() {
               ))}
             </SelectContent>
           </Select>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={async () => {
-              await loadContexts();
-              if (currentContext) {
-                await loadNamespaces(currentContext);
-              }
-            }}
-            className="h-9 w-9"
-            title="Refresh contexts"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={async () => {
+                await loadContexts();
+                if (currentContext) {
+                  await loadNamespaces(currentContext);
+                }
+              }}
+              className="h-9 w-9"
+              title="Refresh contexts"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const response = await fetch('/api/kubernetes/contexts?useKubeconfig=true');
+                const contexts = await response.json();
+                setContexts(contexts);
+              }}
+              className="h-9"
+              title="Load from kubeconfig"
+            >
+              Load kubeconfig
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center">
