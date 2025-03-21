@@ -108,7 +108,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Kubernetes routes
   app.get("/api/kubernetes/contexts", isAuthenticated, async (req, res) => {
     try {
-      const contexts = await getContexts();
+      const useKubeconfig = req.query.useKubeconfig === 'true';
+      const contexts = await getContexts(useKubeconfig);
       res.json(contexts);
     } catch (error) {
       if (error instanceof Error) {

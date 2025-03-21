@@ -146,9 +146,24 @@ export async function executeKubernetesCommand(
   }
 }
 
-// Function to load contexts from configuration file
-export async function loadContextsFromFile(filePath?: string): Promise<string[]> {
+// Function to load contexts from kubeconfig
+async function loadContextsFromKubeconfig(): Promise<string[]> {
   try {
+    const { stdout } = await execAsync('kubectl config get-contexts -o name');
+    return stdout.trim().split('\n');
+  } catch (error) {
+    console.error('Error reading kubeconfig contexts:', error);
+    return [];
+  }
+}
+
+// Function to load contexts from configuration file
+export async function loadContextsFromFile(filePath?: string, useKubeconfig: boolean = false): Promise<string[]> {
+  try {
+    if (useKubeconfig) {
+      return await loadContextsFromKubeconfig();
+    }
+
     // Default to the config.json file in the project root
     const configPath = filePath || path.join(process.cwd(), 'k8s-config.json');
     
@@ -177,9 +192,10 @@ export async function loadContextsFromFile(filePath?: string): Promise<string[]>
 }
 
 // Function to get Kubernetes contexts
-export async function getContexts(): Promise<Array<{name: string; available: boolean}>> {
+export async function getContexts(useKubeconfig: boolean = false): Promise<Array<{name: string; available: boolean}>> {
   try {
-    return configCache.contexts.map(context => ({
+    const contexts = await loadContextsFromFile(undefined, useKubeconfig);
+    return contexts.map(context => ({
       name: context,
       available: configCache.contextStatus[context] || false
     }));
