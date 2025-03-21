@@ -11,8 +11,6 @@ services:
     volumes:
       # Mount the Kubernetes config file for accessing clusters
       - ${HOME}/.kube:/root/.kube:ro
-      # Mount the config file for contexts and namespaces
-      - ./k8s-config.json:/app/k8s-config.json:ro
     environment:
       - NODE_ENV=production
       - SESSION_SECRET=change-me-in-production
