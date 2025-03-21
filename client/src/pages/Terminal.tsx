@@ -102,31 +102,68 @@ export default function Terminal() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden p-4">
-      {/* Namespace Selector */}
-      <div className="mb-4 flex items-center text-sm">
-        <span className="mr-2">Namespace:</span>
-        <Select value={currentNamespace} onValueChange={setCurrentNamespace}>
-          <SelectTrigger className="w-[180px] bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <SelectValue placeholder="Select namespace" />
-          </SelectTrigger>
-          <SelectContent>
-            {namespaces.map((ns) => (
-              <SelectItem key={ns} value={ns}>{ns}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Context, Namespace, and Pod selectors */}
+      <div className="mb-4 flex flex-wrap items-center gap-4 text-sm">
+        <div className="flex items-center">
+          <span className="mr-2">Context:</span>
+          <Select value={currentContext} onValueChange={setCurrentContext}>
+            <SelectTrigger className="w-[180px] bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <SelectValue placeholder="Select context" />
+            </SelectTrigger>
+            <SelectContent>
+              {contexts.map((ctx) => (
+                <SelectItem key={ctx} value={ctx}>{ctx}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         
-        <span className="ml-4 mr-2">Context:</span>
-        <Select value={currentContext} onValueChange={(context) => useKubernetesStore.setState({ currentContext: context })}>
-          <SelectTrigger className="w-[180px] bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <SelectValue placeholder="Select context" />
-          </SelectTrigger>
-          <SelectContent>
-            {contexts.map((ctx) => (
-              <SelectItem key={ctx} value={ctx}>{ctx}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center">
+          <span className="mr-2">Namespace:</span>
+          <Select value={currentNamespace} onValueChange={setCurrentNamespace}>
+            <SelectTrigger className="w-[180px] bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <SelectValue placeholder="Select namespace" />
+            </SelectTrigger>
+            <SelectContent>
+              {namespaces.map((ns) => (
+                <SelectItem key={ns} value={ns}>{ns}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex items-center">
+          <span className="mr-2">Pod:</span>
+          <div className="flex items-center gap-2">
+            <Select 
+              value={currentPod || "none"} 
+              onValueChange={(pod) => setCurrentPod(pod === "none" ? null : pod)}
+            >
+              <SelectTrigger className="w-[220px] bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                <SelectValue placeholder="Select pod (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No pod selected</SelectItem>
+                {pods.map((pod) => (
+                  <SelectItem key={pod} value={pod}>{pod}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={handleRefreshPods}
+              disabled={isLoadingPods}
+              title="Refresh pods list"
+              className="h-9 w-9"
+            >
+              <RefreshCw 
+                className={`h-4 w-4 ${isLoadingPods ? 'animate-spin' : ''}`} 
+              />
+            </Button>
+          </div>
+        </div>
       </div>
       
       {/* Command Input */}
@@ -136,6 +173,7 @@ export default function Terminal() {
         onExecute={executeCommand}
         isAuthenticated={isAuthenticated}
         onAuthClick={() => setShowAuthModal(true)}
+        selectedPod={currentPod}
       />
       
       {/* Output Terminal */}
