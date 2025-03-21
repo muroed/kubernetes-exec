@@ -147,8 +147,11 @@ export default function Terminal() {
                 try {
                   const response = await fetch('/api/kubernetes/contexts?useKubeconfig=true');
                   const contexts = await response.json();
-                  setContexts(contexts);
-                  await loadNamespaces(currentContext);
+                  const contextNames = contexts.map(ctx => ctx.name);
+                  setContexts(contextNames);
+                  if (currentContext) {
+                    await loadNamespaces(currentContext);
+                  }
                 } catch (error) {
                   console.error('Failed to load contexts:', error);
                 }
